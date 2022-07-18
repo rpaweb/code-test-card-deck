@@ -174,8 +174,49 @@ class CardDeck {
 //  Your code goes below this comment.
 /*------------------------------------------*/
 
-// Create a new card deck.
-const deck = new CardDeck(".deck", ".hand");
+const deck = new CardDeck(".deck", ".hand");                                             // CREATE A NEW CARD DECK
+const query = window.location.search;                                                    // QUERY PARAMETERS
 
-// Take a look at the deck object and its methods.
-console.log(deck);
+/* CARDS */
+if (query.includes("cards=")) {
+  const cardRegEx = /([a-z][-][\dA-Z])+/g;                                               // Card REGEX
+  const results = query.match(cardRegEx);                                                // Look if matched the REGEX
+  results.forEach((result) => deck.draw(result));                                        // Draw cards according to the query resolution.
+};
+
+/* SUITS */
+if (query.includes("suits=")) {
+  const cardRegEx = /([a-z]+)+/g;                                                        // Card REGEX
+  const results = query.match(cardRegEx);                                                // Look if matched the REGEX
+  deck.filter("suit", results.slice(1));                                                 // Filtering cards according to the query resolution.
+  deck.drawFiltered();                                                                   // Draw cards according to the filter passed.
+};
+
+/* RANKS */
+if (query.includes("ranks=")) {
+  const cardRegEx = /([a-z][=][\dA-Z+\dA-Z]+&?)+/g                                       // Card REGEX
+  const results = query.match(cardRegEx);                                                // Look if matched the REGEX
+
+  let cards = [];
+  results.forEach((result) => cards.push(result.split("=")[1]));                         // Loop through matches and push cards to array
+  cards = cards.join("").split("+").map((x) => parseInt(x));                             // Need to convert into integers to filter after.
+
+  if (deck.hand.length > 0) {
+    const cardsFiltered = deck.hand.filter((card) => !cards.includes(card["rank"]));      // Filtering in-hand cards.
+    cardsFiltered.forEach((card) => deck.discard(card["id"]));                            // Looping accross the cards and discarding.
+  } else if (deck.hand.length == 0) {
+    deck.filter("rank", cards);                                                           // Filtering cards according to the results.
+    deck.drawFiltered();                                                                  // Draw cards according to the filter passed.
+  }
+};
+
+/* LIMIT */
+if (query.includes("limit=")) {
+  const cardRegEx = /limit=(\d+)/g;                                                       // Card REGEX
+  const results = query.match(cardRegEx);                                                 // Look if matched the REGEX
+  const cards = parseInt(results[0].split("=")[1]);                                       // Need to convert into integers to filter after.
+
+  deck.hand.forEach((card, i) => {
+    if (i >= cards) deck.discard(card.id);                                                // Discarding cards according to filter.
+  });
+};
